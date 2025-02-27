@@ -5,15 +5,15 @@ services:
     image: ildarius116/payment_system-web:latest
     build: .
     container_name: stripe_app
-    command: python main/manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/main
+      - .:/app
     ports:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      - db
+    networks:
+      - app-network
 
   db:
     image: postgres:13
@@ -24,6 +24,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -32,24 +32,75 @@ __Доступные адреса (эндпоинты) и функции:__
 
 ## Запуск сервера:
 
-1.	Остановите контейнеры (если они запущены):
-`docker-compose down`
-2.	Запустите контейнеры:
-`docker-compose up -d`
-3.	Подключитесь к контейнеру с приложением:
+### Вариант 1
+1. Соберите и запустите контейнеры:
+`docker-compose up --build`
+2. Подключитесь к контейнеру с приложением:
 `docker exec -it stripe_app bash`
-4.	Примените миграции:
-Внутри контейнера выполните команду для применения миграций:
-`python main/manage.py migrate`
-5.	Создайте суперпользователя (опционально, если вам нужен доступ к админке):
-`python main/manage.py createsuperuser`
-6.	Создайте тестовые данные (опционально, если вам нужен готовый набор тестовых товаров и заказов):
-`python main/manage.py createtestitems`
+3. Внутри контейнера выполните команду для применения миграций:
+`python manage.py migrate`
+4. Создайте суперпользователя (опционально, если вам нужен доступ к админке):
+`python manage.py createsuperuser`
+5. Создайте тестовые данные (опционально, если вам нужен готовый набор тестовых товаров и заказов):
+`python manage.py createtestitems`
+
+### Вариант 2
+1.	Скачайте образы из DockerHub:
+`docker pull ildarius116/payment_system-web`
+2. Создайте файл `docker-compose.yml` и заполните его следующим кодом:
+```yaml
+version: '3.8'
+
+services:
+  web:
+    image: ildarius116/payment_system-web:latest
+    build: .
+    container_name: stripe_app
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  db:
+    image: postgres:13
+    container_name: stripe_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+```
+3. Запустите контейнеры:
+`docker-compose up`
+4. Подключитесь к контейнеру с приложением:
+`docker exec -it stripe_app bash`
+5. Внутри контейнера выполните команду для применения миграций:
+`python manage.py migrate`
+6. Создайте суперпользователя (опционально, если вам нужен доступ к админке):
+`python manage.py createsuperuser`
+7. Создайте тестовые данные (опционально, если вам нужен готовый набор тестовых товаров и заказов):
+`python manage.py createtestitems`
+
 
 ### Внимание !!!
 Текущий сервер (http://92.255.111.22:8000) запущен (оплачен) до 10.03.2025 (максимум)
 
-_Суперюзер для админики:_
+_Суперюзер для админки:_
 ```
 login: test_admin
 password: admin1234
